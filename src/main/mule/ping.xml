@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<mule xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns="http://www.mulesoft.org/schema/mule/core"
+	xmlns:doc="http://www.mulesoft.org/schema/mule/documentation"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+	<sub-flow name="ping_get-health" doc:id="7c8ce4ef-31e6-4714-b002-1dbd2f89c02e" >
+		<set-variable value='#[attributes.queryParams.checkDependencies == "true" default false]' doc:name="checkDependencies" doc:id="2036a0fb-689d-4fe6-bfbb-e3bdf61d84e4" variableName="checkDependencies"/>
+		<choice doc:name="Choice" doc:id="c7f38934-3f44-40de-b65f-e0ad399e5b7f" >
+			<when expression="#[vars.checkDependencies]">
+				<flow-ref doc:name="Check Dependencies" doc:id="067068fd-24f5-4416-a79a-94e7ad5def3b" name="ping_check-dependencies" target="dependencyList"/>
+			</when>
+			<otherwise>
+				<set-variable doc:name="dependencyList" doc:id="a7d513c3-49f2-4b6a-b1b8-4deb0eb82611" variableName="dependencyList" value="#[null]"/>
+			</otherwise>
+		</choice>
+		<ee:transform doc:name="Map Response" doc:id="e7fb9656-5d9b-4a2e-8804-ad88036dc1b8">
+			<ee:message>
+				<ee:set-payload resource="dwl/ping-check-dependency-response.dwl" />
+			</ee:message>
+		</ee:transform>
+		<set-variable value="200" doc:name="httpStatus" doc:id="7361d227-08b5-4c9a-8746-907c54bcd5d4" variableName="httpStatus"/>
+	</sub-flow>
+	<sub-flow name="ping_check-dependencies" doc:id="bfab46ac-1d9c-4308-b96d-c45a5deb5df2" >
+		<ee:transform doc:name="Map Dependencies" doc:id="b4b0bafb-8122-45e5-8e8c-160c7e220f7f" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+[]]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+	</sub-flow>
+</mule>

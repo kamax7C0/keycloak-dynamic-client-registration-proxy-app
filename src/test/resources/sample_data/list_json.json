@@ -1,0 +1,18 @@
+[
+    {
+        "productId": "0100404",
+        "available": "    96",
+        "onHand": "0",
+        "unsellable": "0",
+        "nextReceiptDate": "01/02/2019",
+        "warehouseId": "CHE"
+    },
+    {
+        "productId": "0100503",
+        "available": "  214",
+        "onHand": "0",
+        "unsellable": "0",
+        "nextReceiptDate": "12/12/2018",
+        "warehouseId": "CHE"
+    }
+]

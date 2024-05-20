@@ -1,0 +1,127 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<mule xmlns="http://www.mulesoft.org/schema/mule/core"
+	xmlns:apikit="http://www.mulesoft.org/schema/mule/mule-apikit"
+	xmlns:doc="http://www.mulesoft.org/schema/mule/documentation"
+	xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core"
+	xmlns:http="http://www.mulesoft.org/schema/mule/http"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd http://www.mulesoft.org/schema/mule/mule-apikit http://www.mulesoft.org/schema/mule/mule-apikit/current/mule-apikit.xsd http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd ">
+	<flow name="oidc-dynamic-client-registration-proxy-main">
+		<http:listener
+			config-ref="api-template-httpListenerConfig" path="/api/*">
+			<http:response
+				statusCode="#[vars.httpStatus default 200]">
+			</http:response>
+			<http:error-response
+				statusCode="#[vars.httpStatus default 500]">
+				<http:body>#[payload]</http:body>
+			</http:error-response>
+		</http:listener>
+		<apikit:router
+			config-ref="oidc-dynamic-client-registration-proxy-config" />
+		<error-handler ref="error-handler_common" />
+	</flow>
+	<flow name="oidc-dynamic-client-registration-proxy-console">
+		<http:listener
+			config-ref="api-template-httpListenerConfig" path="/console/*">
+			<http:response
+				statusCode="#[vars.httpStatus default 200]">
+			</http:response>
+			<http:error-response
+				statusCode="#[vars.httpStatus default 500]">
+				<http:body>#[payload]</http:body>
+			</http:error-response>
+		</http:listener>
+		<apikit:console
+			config-ref="oidc-dynamic-client-registration-proxy-config" />
+		<error-handler ref="error-handler_common" />
+	</flow>
+	<flow
+		name="put:\clients-registrations\(client_id):application\json:oidc-dynamic-client-registration-proxy-config">
+		<logger level="INFO" doc:name="Log Request"
+			doc:id="c3f08b9e-6da5-4c99-a76a-c458840f1c5e"
+			message="#['Updating application client: ' ++ attributes.uriParams['client_id'] default 'NO NAME WAS PROVIDED']" />
+		<ee:transform doc:name="Transform Message"
+			doc:id="08effb0f-72c9-4e4d-a360-ddfbf2302775">
+			<ee:message>
+				<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{
+	client_id: payload.client_id default "",
+	client_secret: payload.client_secret default "",
+	client_name: payload.client_name default "",
+	redirect_uris: payload.redirect_uris map ( redirecturi , indexOfRedirecturi ) -> redirecturi,
+	token_endpoint_auth_method: payload.token_endpoint_auth_method default "",
+	grant_types: payload.grant_types map ( granttype , indexOfGranttype ) -> granttype,
+	response_types: payload.response_types map ( responsetype , indexOfResponsetype ) -> responsetype
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<http:request method="PUT" doc:name="Keycloak PUT client_id" doc:id="18d71284-b2a1-486e-94f1-92a448ebe9d5" config-ref="Keycloak_HTTP_Request_configuration" path="#['/clients-registrations/openid-connect/' ++ attributes.uriParams['client_id']]" sendCorrelationId="ALWAYS" />
+		<logger level="INFO" doc:name="Log Response" doc:id="3e14e5bc-e144-4d67-ac65-099454cb3f4c" message="#['Application client ' ++ payload.client_name default 'NO NAME WAS PROVIDED' ++ ' updated successfully']" />
+    </flow>
+	<flow
+		name="delete:\clients-registrations\(client_id):oidc-dynamic-client-registration-proxy-config">
+		<logger level="INFO" doc:name="Log Request"
+			doc:id="8bcef022-c801-490f-bec3-4d7171ad4354"
+			message="#['Deleting application client: ' ++ attributes.uriParams['client_id'] default 'NO NAME WAS PROVIDED']" />
+		<http:request method="DELETE"
+			doc:name="Keycloak DELETE client_id"
+			doc:id="a7060505-e401-4b85-8216-61f4fcc1eb87"
+			config-ref="Keycloak_HTTP_Request_configuration"
+			path="#['/clients-registrations/openid-connect/' ++ attributes.uriParams['client_id']]"
+			sendCorrelationId="ALWAYS" />
+		<logger level="INFO" doc:name="Log Response"
+			doc:id="f5124493-e62f-4e19-893c-dad2c7403c7f"
+			message="#['Application client ' ++ attributes.uriParams['client_id'] default 'NO NAME WAS PROVIDED' ++ ' deleted successfully']" />
+	</flow>
+	<flow
+		name="get:\clients-registrations\(client_id):oidc-dynamic-client-registration-proxy-config">
+		<logger level="INFO" doc:name="Log Request"
+			doc:id="5e8d8cf8-c58f-4e3b-9eeb-5d338f23d12d"
+			message="#['Getting details of application client: ' ++ attributes.uriParams['client_id'] default 'NO NAME WAS PROVIDED']" />
+		<http:request method="GET"
+			doc:name="Keycloak GET client_id "
+			doc:id="92973647-b931-46c9-ae87-93925c87c5a6"
+			config-ref="Keycloak_HTTP_Request_configuration"
+			path="#['/clients-registrations/openid-connect/' ++ attributes.uriParams['client_id']]"
+			sendCorrelationId="ALWAYS" >
+		</http:request>
+		<logger level="INFO" doc:name="Log Response"
+			doc:id="ff36ccd2-29fa-4d36-88b8-5b0284a13bf7"
+			message="#['Application client details found: ' ++ payload.client_name default 'ERROR - NO CLIENT NAME']" />
+	</flow>
+	<flow
+		name="post:\clients-registrations:application\json:oidc-dynamic-client-registration-proxy-config">
+		<logger level="INFO" doc:name="Log Request"
+			doc:id="acb2e18c-de81-4504-b78b-84e0450df098"
+			message="#['Creating application client: ' ++ payload.client_name default 'NO NAME WAS PROVIDED']" />
+		<ee:transform doc:name="Transform Message"
+			doc:id="47188764-bb3d-410e-9685-b10843cd723b">
+			<ee:message>
+				<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{
+	client_name: payload.client_name default "",
+	token_endpoint_auth_method: payload.token_endpoint_auth_method default "",
+	grant_types: payload.grant_types map ( granttype , indexOfGranttype ) -> granttype,
+	response_types: payload.response_types map ( responsetype , indexOfResponsetype ) -> responsetype,
+	request_uris: payload.redirect_uris map ( redirecturi , indexOfRedirecturi ) -> redirecturi
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<http:request method="POST" doc:name="Keycloak POST /"
+			doc:id="94149ab0-2eb8-4c2c-89dc-672552c93c2d"
+			config-ref="Keycloak_HTTP_Request_configuration"
+			path="/clients-registrations/openid-connect"
+			sendCorrelationId="ALWAYS" />
+		<logger level="INFO" doc:name="Log Response"
+			doc:id="65212a73-c102-4204-b438-7e6368bb99b9"
+			message="#['Application client ' ++ payload.client_name default 'NO NAME WAS PROVIDED' ++ ' created successfully']" />
+	</flow>
+	<flow name="get:\ping:api-template-config" doc:id="3c5f9d53-09fb-428a-9f59-e29cfba670ac">
+		<flow-ref doc:name="ping_get-health" doc:id="f9d433e1-9c80-43c5-a99d-6f95be3cf7a2" name="ping_get-health" />
+	</flow>
+</mule>

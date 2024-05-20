@@ -1,0 +1,10 @@
+# API specification
+api:
+  autodiscoveryID: "00000000"
+  
+# Listener configuration
+api-template:
+  http-listener:
+      host: "0.0.0.0"
+      port: "8082"
+      path: "/api/*"            

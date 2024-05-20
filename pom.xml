@@ -1,0 +1,234 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+	<modelVersion>4.0.0</modelVersion>
+
+	<groupId>5740e2a1-292e-4ab7-ad80-f2a818265877</groupId>
+	<artifactId>keycloak-client-registration-proxy-app</artifactId>
+	<version>1.0.4</version>
+	<packaging>mule-application</packaging>
+
+	<name>keycloak-proxy-app</name>
+
+	<properties>
+		<api.layer.eapi>Experience</api.layer.eapi>
+		<api.layer.papi>Process</api.layer.papi>
+		<api.layer.sapi>System</api.layer.sapi>
+		<api.layer.backend>Backend</api.layer.backend>
+		<api.layer.none>None</api.layer.none>
+
+		<api.name>Keycloak Dynamic Client Registration Proxy App</api.name>
+		<api.version>1.0.4</api.version>
+
+		<anypoint.platform.visualizerLayer>${api.layer.sapi}</anypoint.platform.visualizerLayer>
+		<api.layer>${api.layer.sapi}</api.layer>
+
+		<api.groupId>${project.groupId}</api.groupId>
+		<api.artifactId>${project.artifactId}</api.artifactId>
+
+		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+		<project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
+
+		<app.runtime>4.6.3</app.runtime>
+		<app.runtime.semver>4.6.3</app.runtime.semver>
+		<app.deployment.orgId>${project.groupId}</app.deployment.orgId>
+		<app.deployment.env>${mule.env}</app.deployment.env>
+		<app.deployment.encryptKey>${mule.key}</app.deployment.encryptKey>
+		<app.apigw.client_id>${ag.client_id}</app.apigw.client_id>
+		<app.apigw.client_secret>${ag.client_secret}</app.apigw.client_secret>
+
+		<app.connapp.client_id>${ca.client_id}</app.connapp.client_id>
+		<app.connapp.client_secret>${ca.client_secret}</app.connapp.client_secret>
+	</properties>
+	<build>
+		<resources>
+			<resource>
+				<directory>src/main/resources</directory>
+				<filtering>true</filtering>
+			</resource>
+		</resources>
+		<testResources>
+			<testResource>
+				<directory>src/test/resources</directory>
+				<filtering>true</filtering>
+			</testResource>
+		</testResources>
+		<plugins>
+			<plugin>
+				<groupId>org.mule.tools.maven</groupId>
+				<artifactId>mule-maven-plugin</artifactId>
+				<version>4.1.1</version>
+				<extensions>true</extensions>
+				<configuration>
+					<classifier>mule-application</classifier>
+					<cloudhub2Deployment>
+						<uri>https://eu1.anypoint.mulesoft.com</uri>
+						<environment>${app.deployment.env}</environment>
+						<muleVersion>${app.runtime.semver}</muleVersion>
+						<username>${anypoint.platform.username}</username>
+						<password>${anypoint.platform.password}</password>
+						<releaseChannel>LTS</releaseChannel>
+						<javaVersion>17</javaVersion>
+						<target>Cloudhub-EU-Central-1</target>
+						<provider>MC</provider>
+						<replicas>1</replicas>
+						<vCores>0.1</vCores>
+						<applicationName>${project.name}-${app.deployment.env}</applicationName>
+						<server>anypoint-exchange-v3-deployment</server>
+						<properties>
+							<mule.env>${app.deployment.env}</mule.env>
+							<anypoint.platform.visualizer.displayName>${project.name}(${app.deployment.env})
+							</anypoint.platform.visualizer.displayName>
+							<anypoint.platform.visualizer.layer>${api.layer}</anypoint.platform.visualizer.layer>
+							<anypoint.platform.config.analytics.agent.enabled>true</anypoint.platform.config.analytics.agent.enabled>
+							<anypoint.platform.analytics_base_uri>https://analytics-ingest.eu1.anypoint.mulesoft.com
+							</anypoint.platform.analytics_base_uri>
+							<anypoint.platform.base_uri>https://eu1.anypoint.mulesoft.com</anypoint.platform.base_uri>
+						</properties>
+						<secureProperties>
+							<mule.key>${app.deployment.encryptKey}</mule.key>
+							<anypoint.platform.client_id>${app.apigw.client_id}</anypoint.platform.client_id>
+							<anypoint.platform.client_secret>${app.apigw.client_secret}</anypoint.platform.client_secret>
+						</secureProperties>
+					</cloudhub2Deployment>
+				</configuration>
+			</plugin>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-resources-plugin</artifactId>
+				<version>3.3.1</version>
+				<configuration>
+					<nonFilteredFileExtensions>
+						<nonFilteredFileExtension>p12</nonFilteredFileExtension>
+						<nonFilteredFileExtension>crt</nonFilteredFileExtension>
+						<nonFilteredFileExtension>pem</nonFilteredFileExtension>
+						<nonFilteredFileExtension>jar</nonFilteredFileExtension>
+					</nonFilteredFileExtensions>
+				</configuration>
+			</plugin>
+			<plugin>
+				<groupId>com.mulesoft.munit.tools</groupId>
+				<artifactId>munit-maven-plugin</artifactId>
+				<version>3.1.0</version>
+				<executions>
+					<execution>
+						<id>test</id>
+						<phase>test</phase>
+						<goals>
+							<goal>test</goal>
+							<goal>coverage-report</goal>
+						</goals>
+					</execution>
+				</executions>
+				<configuration>
+					<runtimeVersion>${app.runtime}</runtimeVersion>
+					<runtimeProduct>MULE_EE</runtimeProduct>
+					<environmentVariables>
+						<env>${app.deployment.env}</env>
+						<encryptKey>${deployment.encryptKey}</encryptKey>
+						<anypoint.platform.gatekeeper>disabled</anypoint.platform.gatekeeper>
+					</environmentVariables>
+					<coverage>
+						<runCoverage>true</runCoverage>
+						<formats>
+							<format>html</format>
+							<format>console</format>
+						</formats>
+					</coverage>
+				</configuration>
+			</plugin>
+		</plugins>
+	</build>
+
+	<dependencies>
+		<dependency>
+			<groupId>org.mule.connectors</groupId>
+			<artifactId>mule-http-connector</artifactId>
+			<version>1.9.2</version>
+			<classifier>mule-plugin</classifier>
+		</dependency>
+		<dependency>
+			<groupId>org.mule.modules</groupId>
+			<artifactId>mule-apikit-module</artifactId>
+			<version>1.10.4</version>
+			<classifier>mule-plugin</classifier>
+		</dependency>
+		<dependency>
+			<groupId>org.mule.connectors</groupId>
+			<artifactId>mule-sockets-connector</artifactId>
+			<version>1.2.4</version>
+			<classifier>mule-plugin</classifier>
+		</dependency>
+		<dependency>
+			<groupId>com.mulesoft.modules</groupId>
+			<artifactId>mule-secure-configuration-property-module</artifactId>
+			<version>1.2.7</version>
+			<classifier>mule-plugin</classifier>
+		</dependency>
+		<dependency>
+			<groupId>com.mulesoft.munit</groupId>
+			<artifactId>munit-runner</artifactId>
+			<version>3.1.0</version>
+			<classifier>mule-plugin</classifier>
+			<scope>test</scope>
+		</dependency>
+		<dependency>
+			<groupId>com.mulesoft.munit</groupId>
+			<artifactId>munit-tools</artifactId>
+			<version>3.1.0</version>
+			<classifier>mule-plugin</classifier>
+			<scope>test</scope>
+		</dependency>
+		<dependency>
+			<groupId>org.mule.modules</groupId>
+			<artifactId>mule-oauth-module</artifactId>
+			<version>1.1.21</version>
+			<classifier>mule-plugin</classifier>
+		</dependency>
+		<dependency>
+			<groupId>5740e2a1-292e-4ab7-ad80-f2a818265877</groupId>
+			<artifactId>oidc-dynamic-client-registration-proxy</artifactId>
+			<version>1.0.4</version>
+			<classifier>oas</classifier>
+			<type>zip</type>
+		</dependency>
+	</dependencies>
+
+	<repositories>
+		<repository>
+			<id>anypoint-exchange-v3</id>
+			<name>Anypoint Exchange</name>
+			<url>https://maven.eu1.anypoint.mulesoft.com/api/v3/maven</url>
+			<layout>default</layout>
+		</repository>
+		<repository>
+			<id>mulesoft-releases</id>
+			<name>MuleSoft Releases Repository</name>
+			<url>https://repository.mulesoft.org/releases/</url>
+			<layout>default</layout>
+		</repository>
+	</repositories>
+
+	<pluginRepositories>
+		<pluginRepository>
+			<id>mulesoft-releases</id>
+			<name>MuleSoft Releases Repository</name>
+			<layout>default</layout>
+			<url>https://repository.mulesoft.org/releases/</url>
+			<snapshots>
+				<enabled>false</enabled>
+			</snapshots>
+		</pluginRepository>
+	</pluginRepositories>
+
+	<distributionManagement>
+		<repository>
+			<id>anypoint-exchange-v3-deployment</id>
+			<name>Retail Repository</name>
+			<url>https://maven.eu1.anypoint.mulesoft.com/api/v3/organizations/${app.deployment.orgId}/maven
+			</url>
+			<layout>default</layout>
+		</repository>
+	</distributionManagement>
+
+</project>

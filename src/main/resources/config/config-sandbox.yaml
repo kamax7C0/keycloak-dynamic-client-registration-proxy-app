@@ -1,0 +1,15 @@
+# API specification
+api:
+  autodiscoveryID: "2203588"
+  
+# Listener configuration
+http:
+  host: "0.0.0.0"
+  port: "8082"
+  path: "/api/*"
+keycloak:
+  realm: Just%20a%20Test%20Realm
+  host: 57f85dbc-6b11-4060-b239-c58c3f281ddf.app.skycloak.io
+  base_path: /realms/${keycloak.realm}
+  token_url: https://${keycloak.host}${keycloak.base_path}/protocol/openid-connect/token
+  client_id: anypoint-client

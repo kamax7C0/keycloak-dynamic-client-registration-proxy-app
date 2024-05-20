@@ -1,0 +1,6 @@
+# Use this file for encrypted user/password information.
+# Unencrypted values may be used in this file using standard yaml syntax
+# Encrypted values must be enclosed in ![] within the quotes.
+
+keycloak:
+  client_secret: "![56zrWhrhWxucqBc1byOETd5H4XjXi5dCfZH1+hOzd3ZYtvDTdBkWXpseO1TjXuCi]"
