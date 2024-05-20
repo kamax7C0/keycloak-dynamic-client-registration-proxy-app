@@ -1,0 +1,26 @@
+%dw 2.0
+
+type auto_a9d09587_76ca_4628_ab69_2aa55d55c0f5_Output_Attributes = {|
+  clientCertificate?: {|
+    publicKey?: {|  |}, 
+    "type"?: String, 
+    encoded?: Binary
+  |}, 
+  headers: {|  |}, 
+  listenerPath: String, 
+  method: String, 
+  queryParams: {|  |}, 
+  queryString: String, 
+  relativePath: String, 
+  remoteAddress: String, 
+  requestPath: String, 
+  requestUri: String, 
+  scheme: String, 
+  uriParams: {|
+    "realm-name": String, 
+    client_id: String
+  |}, 
+  version: String, 
+  localAddress: String
+|}
+

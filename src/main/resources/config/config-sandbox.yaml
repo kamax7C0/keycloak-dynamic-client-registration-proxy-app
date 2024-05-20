@@ -12,4 +12,6 @@ keycloak:
   host: 57f85dbc-6b11-4060-b239-c58c3f281ddf.app.skycloak.io
   base_path: /realms/${keycloak.realm}
   token_url: https://${keycloak.host}${keycloak.base_path}/protocol/openid-connect/token
+  master_token_url: https://${keycloak.host}/realms/master/protocol/openid-connect/token
   client_id: anypoint-client
+  master_client_id: keycloak-admin-client

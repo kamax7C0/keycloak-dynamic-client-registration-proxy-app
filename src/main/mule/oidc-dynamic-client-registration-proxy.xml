@@ -1,11 +1,20 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<mule xmlns="http://www.mulesoft.org/schema/mule/core"
+<mule xmlns:validation="http://www.mulesoft.org/schema/mule/validation"
+	xmlns:oauth="http://www.mulesoft.org/schema/mule/oauth"
+	xmlns="http://www.mulesoft.org/schema/mule/core"
 	xmlns:apikit="http://www.mulesoft.org/schema/mule/mule-apikit"
 	xmlns:doc="http://www.mulesoft.org/schema/mule/documentation"
 	xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core"
-	xmlns:http="http://www.mulesoft.org/schema/mule/http"
-	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-	xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd http://www.mulesoft.org/schema/mule/mule-apikit http://www.mulesoft.org/schema/mule/mule-apikit/current/mule-apikit.xsd http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd ">
+	xmlns:http="http://www.mulesoft.org/schema/mule/http" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd http://www.mulesoft.org/schema/mule/mule-apikit http://www.mulesoft.org/schema/mule/mule-apikit/current/mule-apikit.xsd http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd 
+http://www.mulesoft.org/schema/mule/oauth http://www.mulesoft.org/schema/mule/oauth/current/mule-oauth.xsd
+http://www.mulesoft.org/schema/mule/validation http://www.mulesoft.org/schema/mule/validation/current/mule-validation.xsd">
+	<http:request-config name="Keycloak_Admin_HTTP_Request_configuration" doc:name="HTTP Request configuration" doc:id="8b618758-f748-48d5-b0ac-c00c8a1fc6e0" basePath="/admin${keycloak.base_path}">
+		<http:request-connection protocol="HTTPS" host="${keycloak.host}" >
+			<http:authentication >
+				<oauth:client-credentials-grant-type clientId="${keycloak.master_client_id}" clientSecret="${secure::keycloak.master_client_secret}" tokenUrl="${keycloak.master_token_url}" />
+			</http:authentication>
+		</http:request-connection>
+	</http:request-config>
 	<flow name="oidc-dynamic-client-registration-proxy-main">
 		<http:listener
 			config-ref="api-template-httpListenerConfig" path="/api/*">
@@ -38,9 +47,29 @@
 	</flow>
 	<flow
 		name="put:\clients-registrations\(client_id):application\json:oidc-dynamic-client-registration-proxy-config">
+		<set-variable value="#[attributes.uriParams['client_id']]" doc:name="clientId" doc:id="ce84f166-f0c1-4deb-87fb-dc9e8dbcb0a5" variableName="clientId" />
+		<flow-ref doc:name="Get Current Client -&gt; currentClient" doc:id="4822c779-4dd2-4bf4-ab5f-871db3b4418c" name="get:\clients-registrations\(client_id):oidc-dynamic-client-registration-proxy-config" target="currentClient"/>
+		<choice doc:name="Choice" doc:id="3d58c155-01c5-4231-a712-54370e2c1383" >
+			<when expression="#[vars.currentClient.client_secret != payload.client_secret]">
+				<logger level="INFO" doc:name="Log Secret Update" doc:id="41714e59-ee76-4670-91b9-9c20fae34b48" message="#['Updating Client Secret for ' ++ vars.clientId]"/>
+				<flow-ref doc:name="Generate New Client Secret" doc:id="95c3f206-ca26-4e79-bf10-86666743ed85" name="generate-client-secret" target="newClientSecretPayload"/>
+				<ee:transform doc:name="Update Secret in Payload" doc:id="7141b1d1-1fae-4ef2-9afe-6cedc0e67588" >
+					<ee:message >
+						<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+payload update {
+       case .client_secret ->  vars.newClientSecretPayload.value }]]></ee:set-payload>
+					</ee:message>
+				</ee:transform>
+			</when>
+			<otherwise >
+				<logger level="INFO" doc:name="Log Client Details Update" doc:id="be5f1882-4e37-4685-8512-040e3b0f808a" message="#['Updating Client Details for ' ++ vars.clientId]"/>
+			</otherwise>
+		</choice>
 		<logger level="INFO" doc:name="Log Request"
 			doc:id="c3f08b9e-6da5-4c99-a76a-c458840f1c5e"
-			message="#['Updating application client: ' ++ attributes.uriParams['client_id'] default 'NO NAME WAS PROVIDED']" />
+			message="#['Updating application client: ' ++ vars.clientId]" />
 		<ee:transform doc:name="Transform Message"
 			doc:id="08effb0f-72c9-4e4d-a360-ddfbf2302775">
 			<ee:message>
@@ -59,7 +88,7 @@ output application/json
 			</ee:message>
 		</ee:transform>
 		<http:request method="PUT" doc:name="Keycloak PUT client_id" doc:id="18d71284-b2a1-486e-94f1-92a448ebe9d5" config-ref="Keycloak_HTTP_Request_configuration" path="#['/clients-registrations/openid-connect/' ++ attributes.uriParams['client_id']]" sendCorrelationId="ALWAYS" />
-		<logger level="INFO" doc:name="Log Response" doc:id="3e14e5bc-e144-4d67-ac65-099454cb3f4c" message="#['Application client ' ++ payload.client_name default 'NO NAME WAS PROVIDED' ++ ' updated successfully']" />
+		<logger level="INFO" doc:name="Log Response" doc:id="3e14e5bc-e144-4d67-ac65-099454cb3f4c" message="#['Application client ' ++ vars.clientId ++ ' updated successfully']" />
     </flow>
 	<flow
 		name="delete:\clients-registrations\(client_id):oidc-dynamic-client-registration-proxy-config">
@@ -77,7 +106,7 @@ output application/json
 			message="#['Application client ' ++ attributes.uriParams['client_id'] default 'NO NAME WAS PROVIDED' ++ ' deleted successfully']" />
 	</flow>
 	<flow
-		name="get:\clients-registrations\(client_id):oidc-dynamic-client-registration-proxy-config">
+		name="get:\clients-registrations\(client_id):oidc-dynamic-client-registration-proxy-config" doc:id="a9d09587-76ca-4628-ab69-2aa55d55c0f5">
 		<logger level="INFO" doc:name="Log Request"
 			doc:id="5e8d8cf8-c58f-4e3b-9eeb-5d338f23d12d"
 			message="#['Getting details of application client: ' ++ attributes.uriParams['client_id'] default 'NO NAME WAS PROVIDED']" />
@@ -120,6 +149,12 @@ output application/json
 		<logger level="INFO" doc:name="Log Response"
 			doc:id="65212a73-c102-4204-b438-7e6368bb99b9"
 			message="#['Application client ' ++ payload.client_name default 'NO NAME WAS PROVIDED' ++ ' created successfully']" />
+	</flow>
+	<flow name="generate-client-secret" doc:id="7c1275c8-6dcc-4970-b1ad-b98312c183c2" >
+		<validation:is-not-null doc:name="clientId" doc:id="12fec4b0-0645-4475-96b7-4c16a9b3ae74" value="#[vars.clientId]" message="clientId variable must be set"/>
+		<logger level="INFO" doc:name="Log Request" doc:id="24e86d80-66ed-4f16-be25-debe2dc1ce85" message="#['Generating new secret for: ' ++ vars.clientId]" />
+		<http:request method="POST" doc:name="Keycloak ADMIN SECRET POST /" doc:id="12034e51-46eb-4197-95ce-a17be29fa589" config-ref="Keycloak_Admin_HTTP_Request_configuration" path="#['/clients/' ++ vars.clientId ++ '/client-secret']" sendCorrelationId="ALWAYS" />
+		<logger level="INFO" doc:name="Log Response" doc:id="07c05660-1500-48d3-8d9b-c8583805def4" message="#['Application client secret generated successfully']" />
 	</flow>
 	<flow name="get:\ping:api-template-config" doc:id="3c5f9d53-09fb-428a-9f59-e29cfba670ac">
 		<flow-ref doc:name="ping_get-health" doc:id="f9d433e1-9c80-43c5-a99d-6f95be3cf7a2" name="ping_get-health" />

@@ -4,3 +4,4 @@
 
 keycloak:
   client_secret: "![56zrWhrhWxucqBc1byOETd5H4XjXi5dCfZH1+hOzd3ZYtvDTdBkWXpseO1TjXuCi]"
+  master_client_secret: "![07vmZ2Fhoo9CZAnVEwpOj+rc2u1GU5bOlfgevMLVTdISg1PORxFgt4dl/SFS0CMD]"

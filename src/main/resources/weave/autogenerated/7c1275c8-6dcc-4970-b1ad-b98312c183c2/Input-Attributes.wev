@@ -1,0 +1,26 @@
+%dw 2.0
+
+type auto_7c1275c8_6dcc_4970_b1ad_b98312c183c2_Input_Attributes = {|
+  clientCertificate?: {|
+    publicKey?: {|  |}, 
+    "type"?: String, 
+    encoded?: Binary
+  |}, 
+  headers: {|  |}, 
+  listenerPath: String, 
+  method: String, 
+  queryParams: {|  |}, 
+  queryString: String, 
+  relativePath: String, 
+  remoteAddress: String, 
+  requestPath: String, 
+  requestUri: String, 
+  scheme: String, 
+  uriParams: {|
+    "realm-name": String, 
+    client_id: String
+  |}, 
+  version: String, 
+  localAddress: String
+|}
+

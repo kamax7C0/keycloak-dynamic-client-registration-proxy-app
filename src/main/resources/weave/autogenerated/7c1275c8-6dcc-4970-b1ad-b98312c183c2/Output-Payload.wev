@@ -1,6 +1,6 @@
 %dw 2.0
 
-type auto_193ded90_bed4_43c1_8215_8edb6eb64eaa_Output_Payload = {
+type auto_7c1275c8_6dcc_4970_b1ad_b98312c183c2_Output_Payload = {
   post_logout_redirect_uris?: Array<String>, 
   grant_types?: Array<String>, 
   subject_type?: String, 
