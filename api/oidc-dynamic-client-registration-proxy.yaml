@@ -1,0 +1,267 @@
+openapi: "3.0.0"
+info:
+  title: OpenID Connect Dynamic Client Registration Proxy for Keycloak
+  description: API for registering and managing client applications via OpenID Connect.
+  version: 1.0.0
+servers:
+  - url: https://oidc-proxy.example.com
+    description: URL for client registration management
+    variables:
+      realm-name:
+        default: your-realm
+        description: The name of the realm where the client applications will be managed
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  schemas:
+    ClientRegistration:
+      type: object
+      properties:
+        client_id:
+          type: string
+        client_secret:
+          type: string
+        client_name:
+          type: string
+        redirect_uris:
+          type: array
+          items:
+            type: string
+        token_endpoint_auth_method:
+          type: string
+        grant_types:
+          type: array
+          items:
+            type: string
+        response_types:
+          type: array
+          items:
+            type: string
+        scope:
+          type: string
+        subject_type:
+          type: string
+        request_uris:
+          type: array
+          items:
+            type: string
+        tls_client_certificate_bound_access_tokens:
+          type: boolean
+        dpop_bound_access_tokens:
+          type: boolean
+        post_logout_redirect_uris:
+          type: array
+          items:
+            type: string
+        client_id_issued_at:
+          type: integer
+        client_secret_expires_at:
+          type: integer
+        registration_client_uri:
+          type: string
+        registration_access_token:
+          type: string
+        backchannel_logout_session_required:
+          type: boolean
+        require_pushed_authorization_requests:
+          type: boolean
+        frontchannel_logout_session_required:
+          type: boolean
+
+security:
+  - bearerAuth: []
+
+paths:
+  /clients-registrations:
+    post:
+      summary: Register a new client
+      operationId: registerClient
+      tags:
+        - Client Registration
+      requestBody:
+        description: Client registration data
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ClientRegistration'
+            example:
+              example1:
+                value: {
+                            "redirect_uris": [
+                                "http://localhost:8081/callback"
+                            ],
+                            "grant_types": [
+                                "authorization_code",
+                                "implicit",
+                                "refresh_token",
+                                "password",
+                                "client_credentials",
+                                "urn:openid:params:grant-type:ciba",
+                                "urn:ietf:params:oauth:grant-type:device_code"
+                            ],
+                            "token_endpoint_auth_method": "client_secret_basic",
+                            "response_types": [
+                                "code",
+                                "token",
+                                "id_token"
+                            ],
+                            "client_name": "client app test"
+                        }
+      responses:
+        '201':
+          description: Client registered successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ClientRegistration'
+              examples:
+                example1:
+                  value: {
+                    "client_id": "9ae2b029-18d2-407f-8da7-e1e0bc080cc0",
+                    "client_secret": "WGMrwdDsX2c74TdgGDDS3YYaNvr1Pea7",
+                    "redirect_uris": ["http://localhost:8081/callback"],
+                    "token_endpoint_auth_method": "client_secret_basic",
+                    "grant_types": ["authorization_code", "refresh_token"],
+                    "response_types": ["code", "none"],
+                    "scope": "address phone offline_access microprofile-jwt",
+                    "subject_type": "public",
+                    "request_uris": [],
+                    "tls_client_certificate_bound_access_tokens": false,
+                    "dpop_bound_access_tokens": false,
+                    "post_logout_redirect_uris": ["http://localhost:8081/callback"],
+                    "client_id_issued_at": 1716112019,
+                    "client_secret_expires_at": 0,
+                    "registration_client_uri": "https://keycloak-server/realms/{realm-name}/clients-registrations/openid-connect/9ae2b029-18d2-407f-8da7-e1e0bc080cc0",
+                    "registration_access_token": "bearer access token",
+                    "backchannel_logout_session_required": false,
+                    "require_pushed_authorization_requests": false,
+                    "frontchannel_logout_session_required": false
+                  }
+        '400':
+          description: Invalid input
+        '401':
+          description: Unauthorized
+
+  /clients-registrations/{client_id}:
+    get:
+      summary: Retrieve a client by ID
+      operationId: getClientById
+      tags:
+        - Client Registration
+      parameters:
+        - name: client_id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Client found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ClientRegistration'
+              examples:
+                example1:
+                  value: {
+                    "client_id": "9ae2b029-18d2-407f-8da7-e1e0bc080cc0",
+                    "client_secret": "WGMrwdDsX2c74TdgGDDS3YYaNvr1Pea7",
+                    "redirect_uris": [
+                      "http://localhost:8081/callback"
+                    ],
+                    "token_endpoint_auth_method": "client_secret_basic",
+                    "grant_types": [
+                      "authorization_code",
+                      "refresh_token"
+                    ],
+                    "response_types": [
+                      "code",
+                      "none"
+                    ],
+                    "scope": "address phone offline_access microprofile-jwt",
+                    "subject_type": "public",
+                    "request_uris": [],
+                    "tls_client_certificate_bound_access_tokens": false,
+                    "dpop_bound_access_tokens": false,
+                    "post_logout_redirect_uris": [
+                      "http://localhost:8081/callback"
+                    ],
+                    "client_secret_expires_at": 0,
+                    "registration_client_uri": "https://keycloak-server/realms/{realm-name}/clients-registrations/openid-connect/9ae2b029-18d2-407f-8da7-e1e0bc080cc0",
+                    "backchannel_logout_session_required": false,
+                    "require_pushed_authorization_requests": false,
+                    "frontchannel_logout_session_required": false
+                  }
+        '404':
+          description: Client not found
+        '401':
+          description: Unauthorized
+    put:
+      summary: Update an existing client
+      operationId: updateClient
+      tags:
+        - Client Registration
+      parameters:
+        - name: client_id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        description: Updated client registration data
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ClientRegistration'
+            examples:
+              example1:
+                value: {
+                            "client_id": "client_id",
+                            "client_secret": "some-secret",
+                            "redirect_uris": [
+                                  "http://localhost:8081/callback"
+                              ],
+                            "grant_types": [ "authorization_code" ],
+                            "token_endpoint_auth_method": "client_secret_basic",
+                            "response_types": [ "code" ],
+                            "client_name": "test-client-name"
+                        }
+      responses:
+        '200':
+          description: Client updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ClientRegistration'
+        '400':
+          description: Invalid input
+        '404':
+          description: Client not found
+        '401':
+          description: Unauthorized
+    delete:
+      summary: Delete an existing client
+      operationId: deleteClient
+      tags:
+        - Client Registration
+      parameters:
+        - name: client_id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '204':
+          description: Client deleted successfully
+        '400':
+          description: Invalid input
+        '404':
+          description: Client not found
+        '401':
+          description: Unauthorized
